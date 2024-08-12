@@ -1,0 +1,7 @@
+[package]
+name = "cirpos"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+halo2 = { package = "halo2_proofs", git = "https://github.com/privacy-scaling-explorations/halo2", tag = "v2023_04_20" }
