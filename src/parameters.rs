@@ -4,6 +4,8 @@
 
 use halo2::halo2curves::bn256::Fr;
 
+use crate::constants;
+
 pub fn n_rounds_p() -> [usize; 16] {
     [
         56, 57, 56, 60, 60, 63, 64, 63, 60, 66, 60, 65, 70, 60, 64, 68,
@@ -25,4 +27,18 @@ pub fn n_round_p(inputs: Vec<Fr>) -> usize {
     n_round_p
 }
 
-pub fn c(inputs: Vec<Fr>) ->
+pub fn c() -> Vec<&'static str> {
+    constants::poseidon_c_raw()
+}
+
+pub fn s() -> Vec<&'static str> {
+    constants::poseidon_s_raw()
+}
+
+pub fn m() -> [[&'static str; 3]; 3] {
+    constants::poseidon_m_raw()
+}
+
+pub fn p() -> [[&'static str; 3]; 3] {
+    constants::poseidon_p_raw()
+}

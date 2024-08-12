@@ -1,7 +1,8 @@
 // Poseidon Hash implementation from Circom Library
-// We have constants till t = 3
+// We use parameters just for t = 3! Check here for more constants
+// https://github.com/iden3/circomlib/blob/master/circuits/poseidon_constants.circom
 
-use halo2::{arithmetic::Field, halo2curves::bn256::Fr};
+use halo2::halo2curves::bn256::Fr;
 
 // Exp of S-box.
 pub fn sigma(item: Fr) -> Fr {
@@ -11,4 +12,11 @@ pub fn sigma(item: Fr) -> Fr {
 }
 
 // Adds round constants.
-pub fn ark(t: usize, c: Vec<&'static str>, r: usize) {}
+pub fn ark(input: [Fr; 3], t: usize, c: Vec<Fr>, r: usize) -> [Fr; 3] {
+    let mut state = [Fr::zero(); 3];
+
+    for i in 0..t {
+        state[i] = input[i] + c[i + r]
+    }
+    state
+}

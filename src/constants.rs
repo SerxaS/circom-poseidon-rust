@@ -2,7 +2,7 @@
 // Used like so: sage generate_parameters_grain.sage 1 0 254 2 8 56 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
 // We use parameters just for t = 3! Check here for more constants https://github.com/iden3/circomlib/blob/master/circuits/poseidon_constants.circom
 
-pub fn poseidon_c() -> Vec<&'static str> {
+pub fn poseidon_c_raw() -> Vec<&'static str> {
     [
         "0xee9a592ba9a9518d05986d656f40c2114c4993c11bb29938d21d47304cd8e6e",
         "0xf1445235f2148c5986587169fc1bcd887b08d4d00868df5696fff40956e864",
@@ -89,7 +89,7 @@ pub fn poseidon_c() -> Vec<&'static str> {
     .to_vec()
 }
 
-pub fn poseidon_m() -> [[&'static str; 3]; 3] {
+pub fn poseidon_m_raw() -> [[&'static str; 3]; 3] {
     [
         [
             "0x109b7f411ba0e4c9b2b70caf5c36a7b194be7c11ad24378bfedb68592ba8118b",
@@ -109,7 +109,7 @@ pub fn poseidon_m() -> [[&'static str; 3]; 3] {
     ]
 }
 
-pub fn poseidon_p() -> [[&'static str; 3]; 3] {
+pub fn poseidon_p_raw() -> [[&'static str; 3]; 3] {
     [
         [
             "0x109b7f411ba0e4c9b2b70caf5c36a7b194be7c11ad24378bfedb68592ba8118b",
@@ -129,7 +129,7 @@ pub fn poseidon_p() -> [[&'static str; 3]; 3] {
     ]
 }
 
-pub fn poseidon_s() -> Vec<&'static str> {
+pub fn poseidon_s_raw() -> Vec<&'static str> {
     [
         "0x109b7f411ba0e4c9b2b70caf5c36a7b194be7c11ad24378bfedb68592ba8118b",
         "0x3f0815ab463f1b76ee25a9b8768b3231a89752f427f4f063ab718e707576b31",
