@@ -4,14 +4,25 @@
 
 use halo2::halo2curves::bn256::Fr;
 
-pub fn n_rounds_p() -> [usize; 3] {
-    [56, 57, 56]
+pub fn n_rounds_p() -> [usize; 16] {
+    [
+        56, 57, 56, 60, 60, 63, 64, 63, 60, 66, 60, 65, 70, 60, 64, 68,
+    ]
 }
 
 pub fn t(inputs: Vec<Fr>) -> usize {
     inputs.len() + 1
 }
 
-pub fn n_rounds_t() -> usize {
+pub fn n_rounds_f() -> usize {
     8
 }
+
+pub fn n_round_p(inputs: Vec<Fr>) -> usize {
+    let t = t(inputs);
+    let n_rounds_p = n_rounds_p();
+    let n_round_p = n_rounds_p[t - 2];
+    n_round_p
+}
+
+pub fn c(inputs: Vec<Fr>) ->
