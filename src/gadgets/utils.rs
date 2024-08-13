@@ -1,4 +1,4 @@
-use crate::constants;
+use super::*;
 use halo2::halo2curves::{bn256::Fr, ff::FromUniformBytes};
 
 /// Returns congruent field element for the given hex string.
