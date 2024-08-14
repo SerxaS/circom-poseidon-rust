@@ -3,3 +3,5 @@
 
 # circom-poseidon-rust
 Trying to implement Poseidon Hash from Circom Lib.
+Constants are taken from lib for t = 3 (It is possible to hash 2 given inputs).
+

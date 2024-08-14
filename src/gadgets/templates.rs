@@ -68,6 +68,5 @@ pub fn poseidon_ex(inputs: [Fr; 2], initial_state: Fr, n_outs: usize) {
         }
     }
 
-    component_ark[0] = ark(state, t, c, 0);
-    println!("{:?}", component_ark);
+    component_ark[0] = ark(state, t, c, 0);    
 }

@@ -10,9 +10,7 @@ mod test {
             "0x0000000000000000000000000000000000000000000000000000000000000005",
             "0x000000000000000000000000000000000000000000000000000000000000004d",
         ]
-        .map(|item| hex_to_field(item));
-
-        println!("{:?}", inputs);
+        .map(|item| hex_to_field(item));        
 
         let initial_state = Fr::zero();
 
