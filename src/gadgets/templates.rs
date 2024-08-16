@@ -15,7 +15,7 @@ pub fn sigma(item: Fr) -> Fr {
 }
 
 /// Adds round constants.
-pub fn ark(state: &Vec<Fr>, t: usize, c: Vec<Fr>, r: usize) -> Vec<Fr> {
+pub fn ark(state: &Vec<Fr>, t: usize, c: &Vec<Fr>, r: usize) -> Vec<Fr> {
     let mut new_state = vec![Fr::zero(); t];
 
     for i in 0..t {
@@ -26,7 +26,7 @@ pub fn ark(state: &Vec<Fr>, t: usize, c: Vec<Fr>, r: usize) -> Vec<Fr> {
 }
 
 /// Computes MDS matrix for MixLayer operation.
-pub fn mix(state: Vec<Fr>, t: usize, m: [[Fr; 3]; 3]) -> Vec<Fr> {
+pub fn mix(state: &Vec<Fr>, t: usize, m: [[Fr; 3]; 3]) -> Vec<Fr> {
     let mut new_state = vec![Fr::zero(); t];
 
     for i in 0..t {
@@ -54,7 +54,7 @@ pub fn poseidon_ex(inputs: [Fr; 2], initial_state: Fr, n_outs: usize) {
     let mut component_ark = vec![vec![Fr::zero(); t]; n_rounds_f];
     let mut component_sigma_f = vec![vec![Fr::zero(); t]; n_rounds_f];
     let component_sigma_p = vec![Fr::zero(); n_round_p];
-    let component_mix = vec![Fr::zero(); n_rounds_f - 1];
+    let mut component_mix =vec![vec![Fr::zero(); t]; n_rounds_f - 1];
     let component_mix_s = vec![Fr::zero(); n_round_p];
     let component_mix_last = vec![Fr::zero(); n_outs];
 
@@ -68,16 +68,20 @@ pub fn poseidon_ex(inputs: [Fr; 2], initial_state: Fr, n_outs: usize) {
         }
     }
     
-    component_ark[0] = ark(&state, t, c, 0);    
+    component_ark[0] = ark(&state, t, &c, 0);        
     
     for r in 0..(n_rounds_f / 2) - 1 {
+        component_ark[r + 1] = ark(&state, t, &c, (r + 1) * t);
+        component_mix[r] = mix(&state, t, m);
+        
         for j in 0..t {
             if r == 0 {
-                component_sigma_f[r][j] = sigma(component_ark[0][j])
-            }
-            
+                component_sigma_f[r][j] = sigma(component_ark[0][j]);
+            } else {
+                component_sigma_f[r][j] = mix(&component_ark[0], t, m)[j];
+            }           
         }
     }
-
-    println!("{:#?}", component_ark[0]);
+    
+    println!("{:#?}", component_sigma_f[0]);
 }
