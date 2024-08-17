@@ -52,7 +52,7 @@ pub fn poseidon_ex(inputs: [Fr; 2], initial_state: Fr, n_outs: usize) {
     let p = poseidon_p();
 
     let mut component_ark = vec![vec![Fr::zero(); t]; n_rounds_f];
-    let mut component_sigma_f = vec![vec![Fr::zero(); t]; n_rounds_f];
+    let mut component_sigma_f = vec![vec![vec![Fr::zero()]; t]; n_rounds_f];
     let component_sigma_p = vec![Fr::zero(); n_round_p];
     let mut component_mix =vec![vec![Fr::zero(); t]; n_rounds_f - 1];
     let component_mix_s = vec![Fr::zero(); n_round_p];
@@ -70,47 +70,27 @@ pub fn poseidon_ex(inputs: [Fr; 2], initial_state: Fr, n_outs: usize) {
     
     component_ark[0] = ark(&state, t, &c, 0);        
     
-    for r in 0..(n_rounds_f / 2) - 1 {
-        component_ark[r + 1] = ark(&component_ark[0], t, &c, (r + 1) * t);
-        component_mix[r] = mix(&component_ark[r + 1], t, m);
-        
+    for r in 0..(n_rounds_f / 2) - 1 {        
         for j in 0..t {
             if r == 0 {
-                component_sigma_f[r][j] = sigma(component_ark[0][j]);
+                component_sigma_f[r][j][0] = sigma(component_ark[0][j]);
             } else {
-                component_sigma_f[r][j] = component_mix[r - 1][j];
+                component_sigma_f[r][j][0] = component_mix[r - 1][j];
             }           
-        }
-
-        for j in 0..t {
-            component_ark[r + 1][j] = component_sigma_f[r][j]
-        }
-
-        for j in 0..t {
-            component_mix[r][j] = component_ark[r + 1][j]
-        }
-    }
-
-    for j in 0..t {
-        component_sigma_f[(n_rounds_f / 2) - 1][j] = component_mix[(n_rounds_f / 2) - 2][j];
-    }
-
-    component_ark[n_rounds_f / 2] = ark(&component_sigma_f[n_rounds_f / 2], t, &c, (n_rounds_f / 2) * t);
-    
-    for j in 0..t {
-        component_ark[n_rounds_f / 2][j] = component_sigma_f[(n_rounds_f / 2) - 1][j];
-    }
-
-    component_mix[(n_rounds_f / 2) - 1] = mix(&component_ark[n_rounds_f / 2], t, m);
-
-    for j in 0..t {
-        component_mix[(n_rounds_f / 2) - 1][j] = component_ark[n_rounds_f / 2][j];
+        }               
         
-    }
+        for j in 0..t {
+            component_ark[r + 1][j] = component_sigma_f[r][j][0];
+        }
 
+        component_ark[r + 1] = ark(&component_ark[r + 1], t, &c, (r + 1) * t);
+
+        for j in 0..t {
+            component_mix[r][j] = component_ark[r + 1][j];
+        }
+        
+        component_mix[r] = mix(&component_ark[r + 1], t, m);
+    }   
     
-
-
-
-    println!("{:#?}", component_ark);
+    println!("{:#?}", component_mix);
 }
