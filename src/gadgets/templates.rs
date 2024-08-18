@@ -1,8 +1,3 @@
-// Poseidon Hash implementation from Circom Library
-// https://github.com/iden3/circomlib/blob/master/circuits/poseidon.circom
-// We use parameters just for ninput = 2(t = 3)! Check here for more constants
-// https://github.com/iden3/circomlib/blob/master/circuits/poseidon_constants.circom
-
 use super::*;
 use halo2::halo2curves::bn256::Fr;
 use utils::{poseidon_c, poseidon_m, poseidon_p, poseidon_s};
@@ -19,7 +14,7 @@ pub fn ark(state: &Vec<Fr>, t: usize, c: &Vec<Fr>, r: usize) -> Vec<Fr> {
     let mut new_state = vec![Fr::zero(); t];
 
     for i in 0..t {
-        new_state[i] = state[i] + c[i + r]
+        new_state[i] = state[i] + c[i + r];
     }
 
     new_state
@@ -28,11 +23,16 @@ pub fn ark(state: &Vec<Fr>, t: usize, c: &Vec<Fr>, r: usize) -> Vec<Fr> {
 /// Computes MDS matrix for full rounds and do MixLayer operation.
 pub fn mix(state: &Vec<Fr>, t: usize, m: [[Fr; 3]; 3]) -> Vec<Fr> {
     let mut new_state = vec![Fr::zero(); t];
+    
 
     for i in 0..t {
+        let mut lc = [Fr::zero()];
+
         for j in 0..t {
-            new_state[i] += m[j][i] * state[j];
+            lc[0] += m[j][i] * state[j];
         }
+        
+        new_state[i] = lc[0];
     }
 
     new_state
@@ -54,14 +54,14 @@ pub fn mixs(state: &Vec<Fr>, t: usize, s: &Vec<Fr>, r: usize) -> Vec<Fr> {
 }
 
 /// Computes MDS matrix for last round and do MixLayer operation.
-pub fn mixlast(state: &Vec<Fr>, t: usize, m: [[Fr; 3]; 3], s: usize) -> Vec<Fr> {
+pub fn mixlast(state: &Vec<Fr>, t: usize, m: [[Fr; 3]; 3], s: usize) -> Fr {
     let mut new_state = vec![Fr::zero()];
     
     for j in 0..t {
         new_state[0] += m[j][s] * state[j];
     }    
     
-    new_state
+    new_state[0]
 }
 
 /// Hash arithmetics.
@@ -82,7 +82,7 @@ pub fn poseidon_ex(inputs: [Fr; 2], initial_state: Fr, n_outs: usize) -> Fr {
     let mut component_sigma_p =  vec![Fr::zero(); n_round_p];
     let mut component_mix =vec![vec![Fr::zero(); t]; n_rounds_f - 1];
     let mut component_mix_s = vec![vec![Fr::zero(); t]; n_round_p];
-    let mut component_mix_last = vec![Fr::zero(); n_outs]; 
+    let mut component_mix_last =  vec![Fr::zero(); n_outs];
 
     let mut state = vec![Fr::zero(); t];
 
@@ -94,96 +94,77 @@ pub fn poseidon_ex(inputs: [Fr; 2], initial_state: Fr, n_outs: usize) -> Fr {
         }
     }
     
-    component_ark[0] = ark(&state, t, &c, 0);        
-    
-    for r in 0..n_rounds_f / 2 - 1 {        
+    component_ark[0] = ark(&state, t, &c, 0);
+
+    for r in 0..n_rounds_f / 2 - 1 {
         for j in 0..t {
             if r == 0 {
                 component_sigma_f[r][j][0] = sigma(component_ark[0][j]);
             } else {
-                component_sigma_f[r][j][0] = component_mix[r - 1][j];
-            }           
-        }               
-        
-        for j in 0..t {
-            component_ark[r + 1][j] = component_sigma_f[r][j][0];
+                component_sigma_f[r][j][0] = sigma(component_mix[r - 1][j]);
+            }
         }
 
-        component_ark[r + 1] = ark(&component_ark[r + 1], t, &c, (r + 1) * t);
-
-        for j in 0..t {
-            component_mix[r][j] = component_ark[r + 1][j];
-        }
-        
+        let state: Vec<Fr> = component_sigma_f[r].iter().map(|item| item[0]).collect();
+        component_ark[r + 1] = ark(&state, t, &c, (r + 1) * t);
         component_mix[r] = mix(&component_ark[r + 1], t, m);
-    }   
+    }    
     
     for j in 0..t {
         component_sigma_f[n_rounds_f / 2 - 1][j][0] = sigma(component_mix[n_rounds_f / 2 - 2][j]);
     }
 
-    let new_state: Vec<Fr> = component_sigma_f[n_rounds_f / 2 - 1].iter().map(|item| item[0]).collect();
-    component_ark[n_rounds_f / 2] = ark(&new_state, t, &c, (n_rounds_f / 2) * t);
-    component_mix[(n_rounds_f / 2) - 1] = mix(&component_ark[n_rounds_f / 2], t, p);
-
+    let state: Vec<Fr> = component_sigma_f[n_rounds_f / 2 - 1].iter().map(|item| item[0]).collect();
+    component_ark[n_rounds_f / 2] = ark(&state, t, &c, (n_rounds_f / 2) * t);
+    component_mix[n_rounds_f / 2 - 1] = mix(&component_ark[n_rounds_f / 2], t, p);
     
-
     for r in 0..n_round_p {
         if r == 0 {
-            component_sigma_p[r] = sigma(component_mix[(n_rounds_f / 2) - 1][0]);
+            component_sigma_p[r] = sigma(component_mix[n_rounds_f / 2 - 1][0]);
         } else {
-            component_sigma_p[r] = component_mix_s[r - 1][0];
-        }    
+            component_sigma_p[r] = sigma(component_mix_s[r - 1][0]);
+        }
 
-        let mut new_state = vec![vec![Fr::zero(); t]; n_round_p];
-        
+        let mut state: Vec<Fr> = vec![Fr::zero(); t];
 
         for j in 0..t {
-            if j ==0 {
-                new_state[r][j] = component_sigma_p[r] + c[(n_rounds_f / 2 + 1) * t + r];
+            if j == 0 {
+                state[j] = component_sigma_p[r] + c[(n_rounds_f / 2 + 1) * t + r];
             } else {
                 if r == 0 {
-                    new_state[r][j] = sigma(component_mix[(n_rounds_f / 2) - 1][0]);
+                    state[j] = component_mix[n_rounds_f / 2 - 1][j];
                 } else {
-                    new_state[r][j] = component_mix_s[r - 1][j];
+                    state[j] = component_mix_s[r - 1][j];
                 }
             }
-            // TODO: Check new state! 
-            component_mix_s[r] = mixs(&new_state[r], t, &s, r);
-        } 
+        }
+
+        component_mix_s[r] = mixs(&state, t, &s, r);
     }
 
-    for r in 0..n_rounds_f / 2 - 1 {        
+    for r in 0..n_rounds_f / 2 - 1 {
         for j in 0..t {
             if r == 0 {
-                component_sigma_f[n_rounds_f / 2 + r][j][0] = component_mix_s[n_round_p - 1][j];
+                component_sigma_f[n_rounds_f / 2 + r][j][0] = sigma(component_mix_s[n_round_p - 1 ][j]);
             } else {
-                component_sigma_f[n_rounds_f / 2 + r][j][0] = component_mix[n_rounds_f / 2 + r - 1][j];
+                component_sigma_f[n_rounds_f / 2 + r][j][0] = sigma(component_mix[n_rounds_f / 2 + r - 1][j]);
             }
         }
 
-        for j in 0..t {
-            component_ark[n_rounds_f / 2 + r + 1][j] = component_sigma_f[n_rounds_f / 2 + r][j][0];
-        }
-
-        component_ark[n_rounds_f / 2 + r + 1] = ark(&component_ark[n_rounds_f / 2 + r + 1], t, &c, (n_rounds_f / 2 + 1) * t + n_round_p + r * t);
-        
-        for j in 0..t {
-            component_mix[n_rounds_f / 2 + r][j] = component_ark[n_rounds_f / 2 + r + 1][j];
-        }
-
+        let state: Vec<Fr> = component_sigma_f[n_rounds_f / 2 + r].iter().map(|item| item[0]).collect();
+        component_ark[n_rounds_f / 2 + r + 1] = ark(&state, t, &c, (n_rounds_f / 2 + 1) * t + n_round_p + r * t);
         component_mix[n_rounds_f / 2 + r] = mix(&component_ark[n_rounds_f / 2 + r + 1], t, m);
-    }   
+    }
 
     for j in 0..t {
         component_sigma_f[n_rounds_f - 1][j][0] = sigma(component_mix[n_rounds_f - 2][j]);
     }
 
-    let new_state: Vec<Fr> = component_sigma_f[n_rounds_f - 1].iter().map(|item| item[0]).collect();
-    
-    for i in 0..n_outs {    
-        component_mix_last[i] = mixlast(&new_state, t, m, i)[0];        
-    }
-    println!("{:#?}", component_ark);
-    component_mix_last[0]    
+    let state: Vec<Fr> = component_sigma_f[n_rounds_f - 1].iter().map(|item| item[0]).collect();
+
+    component_mix_last[0] = mixlast(&state, t, m, 0);
+
+    println!("{:?}", component_mix_last[0]);    
+    component_mix_last[0]
 }
+

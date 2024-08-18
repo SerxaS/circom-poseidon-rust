@@ -4,7 +4,7 @@ mod test {
     use halo2::halo2curves::bn256::Fr;
 
     #[test]
-    fn test_poseidon_ark() {
+    fn test_poseidon() {
         // Testing for 2 inputs.
         let inputs = [
             "0x0000000000000000000000000000000000000000000000000000000000000005",
