@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 halo2 = { package = "halo2_proofs", git = "https://github.com/privacy-scaling-explorations/halo2", tag = "v2023_04_20" }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
+num-bigint = "0.4.5"

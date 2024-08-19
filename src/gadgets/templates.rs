@@ -79,10 +79,10 @@ pub fn poseidon_ex(inputs: [Fr; 2], initial_state: Fr, n_outs: usize) -> Fr {
 
     let mut component_ark = vec![vec![Fr::zero(); t]; n_rounds_f];
     let mut component_sigma_f = vec![vec![vec![Fr::zero()]; t]; n_rounds_f];
-    let mut component_sigma_p =  vec![Fr::zero(); n_round_p];
-    let mut component_mix =vec![vec![Fr::zero(); t]; n_rounds_f - 1];
+    let mut component_sigma_p = vec![Fr::zero(); n_round_p];
+    let mut component_mix = vec![vec![Fr::zero(); t]; n_rounds_f - 1];
     let mut component_mix_s = vec![vec![Fr::zero(); t]; n_round_p];
-    let mut component_mix_last =  vec![Fr::zero(); n_outs];
+    let mut component_mix_last = vec![Fr::zero(); n_outs];
 
     let mut state = vec![Fr::zero(); t];
 
@@ -161,10 +161,8 @@ pub fn poseidon_ex(inputs: [Fr; 2], initial_state: Fr, n_outs: usize) -> Fr {
     }
 
     let state: Vec<Fr> = component_sigma_f[n_rounds_f - 1].iter().map(|item| item[0]).collect();
-
     component_mix_last[0] = mixlast(&state, t, m, 0);
-
-    println!("{:?}", component_mix_last[0]);    
+        
     component_mix_last[0]
 }
 
