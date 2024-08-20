@@ -2,7 +2,7 @@ mod gadgets;
 
 #[cfg(test)]
 mod test {
-    use crate::gadgets::{templates, utils::hex_to_field};
+    use crate::gadgets::{templates::Poseidon, utils::hex_to_field};
     use halo2::halo2curves::bn256::Fr;
     use num_bigint::BigInt;
 
@@ -13,16 +13,18 @@ mod test {
             "0x0000000000000000000000000000000000000000000000000000000000000005",
             "0x000000000000000000000000000000000000000000000000000000000000004d",
         ]
-        .map(|item| hex_to_field(item));        
+        .map(|item| hex_to_field(item)).to_vec();        
 
         // Output taken from https://zkrepl.dev
-        let output = "6008246173323011098915936938805752727781568490715388424063708882447636047656";
+        let expected = "6008246173323011098915936938805752727781568490715388424063708882447636047656";
         
+        let poseidon = Poseidon::new(inputs);
         let initial_state = Fr::from(0);
-        let out_fr = templates::poseidon_ex(inputs, initial_state, 1);
-        let out_bytes = Fr::to_bytes(&out_fr);
-        let out = BigInt::from_signed_bytes_le(&out_bytes).to_str_radix(10);
+        let n_outs = 1;        
+        let output_fr = poseidon.poseidon_ex(initial_state, n_outs);
+        let output_bytes = Fr::to_bytes(&output_fr);
+        let output = BigInt::from_signed_bytes_le(&output_bytes).to_str_radix(10);
 
-        assert_eq!(output, out);        
+        assert_eq!(expected, output);        
     }
 }
