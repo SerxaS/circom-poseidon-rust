@@ -204,7 +204,7 @@ impl Index<usize> for Poseidon {
 }
 
 impl IndexMut<usize> for Poseidon {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        self.inputs.index_mut(index)
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        self.inputs.index_mut(idx)
     }
 }
