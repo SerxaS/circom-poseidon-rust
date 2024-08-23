@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use super::*;
 use halo2::halo2curves::bn256::Fr;
 use utils::{poseidon_c, poseidon_m, poseidon_p, poseidon_s};
@@ -22,18 +24,18 @@ impl Poseidon {
 
     /// Adds round constants.
     pub fn ark(&self, state: &Vec<Fr>, t: usize, c: &Vec<Fr>, r: usize) -> Self {
-        let mut new_state = vec![Fr::zero(); t];
+        let mut new_state = Poseidon::new(vec![Fr::zero(); t]);
 
         for i in 0..t {
             new_state[i] = state[i] + c[i + r];
         }
 
-        Poseidon::new(new_state)
+        new_state
     }
 
     /// Computes MDS matrix for full rounds and do MixLayer operation.
     pub fn mix(&self, state: &Vec<Fr>, t: usize, m: [[Fr; 3]; 3]) -> Self {
-        let mut new_state = vec![Fr::zero(); t];
+        let mut new_state = Poseidon::new(vec![Fr::zero(); t]);
 
         for i in 0..t {
             let mut lc = [Fr::zero()];
@@ -45,12 +47,12 @@ impl Poseidon {
             new_state[i] = lc[0];
         }
 
-        Poseidon::new(new_state)
+        new_state
     }
 
     /// Computes MDS matrix for partial rounds and do MixLayer operation.
     pub fn mixs(&self, state: &Vec<Fr>, t: usize, s: &Vec<Fr>, r: usize) -> Self {
-        let mut new_state = vec![Fr::zero(); t];
+        let mut new_state = Poseidon::new(vec![Fr::zero(); t]);
 
         for i in 0..t {
             new_state[0] += s[(t * 2 - 1) * r + i] * state[i];
@@ -60,7 +62,7 @@ impl Poseidon {
             new_state[i] = state[i] + state[0] * s[(t * 2 - 1) * r + t + i - 1];
         }
 
-        Poseidon::new(new_state)
+        new_state
     }
 
     /// Computes MDS matrix for last round and do MixLayer operation.
@@ -190,5 +192,19 @@ impl Poseidon {
         component_mix_last[0] = self.mixlast(&state, t, m, 0);
 
         component_mix_last[0]
+    }
+}
+
+impl Index<usize> for Poseidon {
+    type Output = Fr;
+
+    fn index(&self, idx: usize) -> &Self::Output {
+        self.inputs.index(idx)
+    }
+}
+
+impl IndexMut<usize> for Poseidon {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        self.inputs.index_mut(index)
     }
 }
