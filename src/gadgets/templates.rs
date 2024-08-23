@@ -21,18 +21,18 @@ impl Poseidon {
     }
 
     /// Adds round constants.
-    pub fn ark(&self, state: &Vec<Fr>, t: usize, c: &Vec<Fr>, r: usize) -> Vec<Fr> {
+    pub fn ark(&self, state: &Vec<Fr>, t: usize, c: &Vec<Fr>, r: usize) -> Self {
         let mut new_state = vec![Fr::zero(); t];
 
         for i in 0..t {
             new_state[i] = state[i] + c[i + r];
         }
 
-        new_state
+        Poseidon::new(new_state)
     }
 
     /// Computes MDS matrix for full rounds and do MixLayer operation.
-    pub fn mix(&self, state: &Vec<Fr>, t: usize, m: [[Fr; 3]; 3]) -> Vec<Fr> {
+    pub fn mix(&self, state: &Vec<Fr>, t: usize, m: [[Fr; 3]; 3]) -> Self {
         let mut new_state = vec![Fr::zero(); t];
 
         for i in 0..t {
@@ -45,11 +45,11 @@ impl Poseidon {
             new_state[i] = lc[0];
         }
 
-        new_state
+        Poseidon::new(new_state)
     }
 
     /// Computes MDS matrix for partial rounds and do MixLayer operation.
-    pub fn mixs(&self, state: &Vec<Fr>, t: usize, s: &Vec<Fr>, r: usize) -> Vec<Fr> {
+    pub fn mixs(&self, state: &Vec<Fr>, t: usize, s: &Vec<Fr>, r: usize) -> Self {
         let mut new_state = vec![Fr::zero(); t];
 
         for i in 0..t {
@@ -60,7 +60,7 @@ impl Poseidon {
             new_state[i] = state[i] + state[0] * s[(t * 2 - 1) * r + t + i - 1];
         }
 
-        new_state
+        Poseidon::new(new_state)
     }
 
     /// Computes MDS matrix for last round and do MixLayer operation.
@@ -104,7 +104,7 @@ impl Poseidon {
             }
         }
 
-        component_ark[0] = self.ark(&state, t, &c, 0);
+        component_ark[0] = self.ark(&state, t, &c, 0).inputs;
 
         for r in 0..n_rounds_f / 2 - 1 {
             for j in 0..t {
@@ -116,8 +116,8 @@ impl Poseidon {
             }
 
             let state: Vec<Fr> = component_sigma_f[r].iter().map(|item| item[0]).collect();
-            component_ark[r + 1] = self.ark(&state, t, &c, (r + 1) * t);
-            component_mix[r] = self.mix(&component_ark[r + 1], t, m);
+            component_ark[r + 1] = self.ark(&state, t, &c, (r + 1) * t).inputs;
+            component_mix[r] = self.mix(&component_ark[r + 1], t, m).inputs;
         }
 
         for j in 0..t {
@@ -129,8 +129,8 @@ impl Poseidon {
             .iter()
             .map(|item| item[0])
             .collect();
-        component_ark[n_rounds_f / 2] = self.ark(&state, t, &c, (n_rounds_f / 2) * t);
-        component_mix[n_rounds_f / 2 - 1] = self.mix(&component_ark[n_rounds_f / 2], t, p);
+        component_ark[n_rounds_f / 2] = self.ark(&state, t, &c, (n_rounds_f / 2) * t).inputs;
+        component_mix[n_rounds_f / 2 - 1] = self.mix(&component_ark[n_rounds_f / 2], t, p).inputs;
 
         for r in 0..n_round_p {
             if r == 0 {
@@ -153,7 +153,7 @@ impl Poseidon {
                 }
             }
 
-            component_mix_s[r] = self.mixs(&state, t, &s, r);
+            component_mix_s[r] = self.mixs(&state, t, &s, r).inputs;
         }
 
         for r in 0..n_rounds_f / 2 - 1 {
@@ -171,10 +171,12 @@ impl Poseidon {
                 .iter()
                 .map(|item| item[0])
                 .collect();
-            component_ark[n_rounds_f / 2 + r + 1] =
-                self.ark(&state, t, &c, (n_rounds_f / 2 + 1) * t + n_round_p + r * t);
-            component_mix[n_rounds_f / 2 + r] =
-                self.mix(&component_ark[n_rounds_f / 2 + r + 1], t, m);
+            component_ark[n_rounds_f / 2 + r + 1] = self
+                .ark(&state, t, &c, (n_rounds_f / 2 + 1) * t + n_round_p + r * t)
+                .inputs;
+            component_mix[n_rounds_f / 2 + r] = self
+                .mix(&component_ark[n_rounds_f / 2 + r + 1], t, m)
+                .inputs;
         }
 
         for j in 0..t {
